@@ -21,6 +21,7 @@ static int my_open(struct inode *i, struct file *f) {
 
 static int my_close(struct inode *i, struct file *f) {
 	printk(KERN_INFO "Kloenk: close()\n");
+	return 0;
 }
 
 static ssize_t my_read(struct file *f, char __user *buf, size_t len, loff_t *off) {
