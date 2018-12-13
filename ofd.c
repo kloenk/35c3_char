@@ -6,6 +6,7 @@
 #include <linux/fs.h>
 #include <linux/device.h>
 #include <linux/cdev.h>
+#include <linux/uaccess.h>
 
 static dev_t first;
 static struct cdev c_dev;
@@ -22,14 +23,32 @@ static int my_close(struct inode *i, struct file *f) {
 }
 
 static ssize_t my_read(struct file *f, char __user *buf, size_t len, loff_t *off) {
-	buf[0] = c;
-	return 1;
+	if (*off == 0) {
+		if (copy_to_user(buf, &c, 1) != 0)
+			return -EFAULT;
+		else {
+			(*off)++;
+			return 1;
+		}
+	} else if (*off == 1) {
+		static char z = '\n';
+		if (copy_to_user(buf, &z, 1) != 0) 
+			return -EFAULT;
+		else {
+			(*off)++;
+			return 1;
+		}
+	} else {
+		return 0;
+	}
 }
 
 static ssize_t my_write(struct file *f, const char __user *buf, size_t len, loff_t *off) {
 	printk(KERN_INFO "Driver: write()\n");
-	c = buf[len -1];
-	return len;
+	if (copy_from_user(&c, buf + len - 1, 1) != 0)
+		return -EFAULT;
+	else 
+		return len;
 }
 
 static struct file_operations pugs_fops = {
