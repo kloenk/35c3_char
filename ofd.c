@@ -11,41 +11,34 @@
 static dev_t first;
 static struct cdev c_dev;
 static struct class *c1;
-static char c = 'c';
+#define lenght 6
+static char c[lenght] = "35c3\n";
 
 static int my_open(struct inode *i, struct file *f) {
-	printk(KERN_INFO "Driver: open()\n");
+	printk(KERN_INFO "Kloenk: open()\n");
 	return 0;
 }
 
 static int my_close(struct inode *i, struct file *f) {
-	printk(KERN_INFO "Driver: close()\n");
+	printk(KERN_INFO "Kloenk: close()\n");
 }
 
 static ssize_t my_read(struct file *f, char __user *buf, size_t len, loff_t *off) {
-	if (*off == 0) {
-		if (copy_to_user(buf, &c, 1) != 0)
+	//if (*off == 0) {
+		if (copy_to_user(buf, &c, lenght) != 0)
 			return -EFAULT;
 		else {
 			(*off)++;
-			return 1;
+			return 3;
 		}
-	} else if (*off == 1) {
-		static char z = '\n';
-		if (copy_to_user(buf, &z, 1) != 0) 
-			return -EFAULT;
-		else {
-			(*off)++;
-			return 1;
-		}
-	} else {
-		return 0;
-	}
+	//} else {
+	//	return 0;
+	//}
 }
 
 static ssize_t my_write(struct file *f, const char __user *buf, size_t len, loff_t *off) {
-	printk(KERN_INFO "Driver: write()\n");
-	if (copy_from_user(&c, buf + len - 1, 1) != 0)
+	printk(KERN_INFO "Kloenk: write()\n");
+	if (copy_from_user(&c, buf + len - lenght, lenght) != 0)
 		return -EFAULT;
 	else 
 		return len;
@@ -73,7 +66,7 @@ static int __init ofd_init(void) {	// constructor
 		return PTR_ERR(c1);
 	}
 
-	if (IS_ERR(dev_ret = device_create(c1, NULL, first, NULL, "mynull"))) {
+	if (IS_ERR(dev_ret = device_create(c1, NULL, first, NULL, "35c3"))) {
 		class_destroy(c1);
 		unregister_chrdev_region(first, 1);
 		return PTR_ERR(dev_ret);
@@ -102,4 +95,4 @@ module_exit(ofd_exit);
 
 MODULE_LICENSE("GPL");
 MODULE_AUTHOR("Kloenk <kloenk@kloenk.de>");
-MODULE_DESCRIPTION("Our first driver");
+MODULE_DESCRIPTION("35c3 char dev");
