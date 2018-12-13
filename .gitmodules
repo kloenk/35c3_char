@@ -1,0 +1,3 @@
+[submodule "aur-files"]
+	path = aur-files
+	url = ssh://aur@aur.archlinux.org/35c3_char-dkms-git.git
