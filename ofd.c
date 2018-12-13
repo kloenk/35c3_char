@@ -1,15 +1,81 @@
 #include <linux/module.h>
 #include <linux/version.h>
 #include <linux/kernel.h>
+#include <linux/types.h>
+#include <linux/kdev_t.h>
+#include <linux/fs.h>
+#include <linux/device.h>
+#include <linux/cdev.h>
+
+static dev_t first;
+static struct cdev c_dev;
+static struct class *c1;
+static char c = 'c';
+
+static int my_open(struct inode *i, struct file *f) {
+	printk(KERN_INFO "Driver: open()\n");
+	return 0;
+}
+
+static int my_close(struct inode *i, struct file *f) {
+	printk(KERN_INFO "Driver: close()\n");
+}
+
+static ssize_t my_read(struct file *f, char __user *buf, size_t len, loff_t *off) {
+	buf[0] = c;
+	return 1;
+}
+
+static ssize_t my_write(struct file *f, const char __user *buf, size_t len, loff_t *off) {
+	printk(KERN_INFO "Driver: write()\n");
+	c = buf[len -1];
+	return len;
+}
+
+static struct file_operations pugs_fops = {
+	.owner = THIS_MODULE,
+	.open = my_open,
+	.release = my_close,
+	.read = my_read,
+	.write = my_write
+};
 
 static int __init ofd_init(void) {	// constructor
-	printk(KERN_INFO "Kloenk: ofd registered");
+	int ret;
+	struct device *dev_ret;
 
+	printk(KERN_INFO "Kloenk: registered");
+	if ((ret = alloc_chrdev_region(&first, 0, 1, "Kloenk")) < 0) {
+		return ret;
+	}
+
+	if (IS_ERR(c1 = class_create(THIS_MODULE, "chardrv"))) {
+		unregister_chrdev_region(first, 1);
+		return PTR_ERR(c1);
+	}
+
+	if (IS_ERR(dev_ret = device_create(c1, NULL, first, NULL, "mynull"))) {
+		class_destroy(c1);
+		unregister_chrdev_region(first, 1);
+		return PTR_ERR(dev_ret);
+	}
+
+	cdev_init(&c_dev, &pugs_fops);
+	if ((ret = cdev_add(&c_dev, first, 1)) < 0) {
+		device_destroy(c1, first);
+		class_destroy(c1);
+		unregister_chrdev_region(first, 1);
+		return ret;
+	}
 	return 0;
 }
 
 static void __exit ofd_exit(void) {	// destructor
-	printk(KERN_INFO "Alvida: ofd unregistered");
+	cdev_del(&c_dev);
+	device_destroy(c1, first);
+	class_destroy(c1);
+	unregister_chrdev_region(first, 1);
+	printk(KERN_INFO "Kloenk: unregisterd");
 }
 
 module_init(ofd_init);
