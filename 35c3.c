@@ -11,8 +11,8 @@
 static dev_t first;
 static struct cdev c_dev;
 static struct class *c1;
-#define lenght 4
-static char c[lenght] = "35c3";
+#define lenght 6
+static char c[lenght] = "35c3·";
 
 static int my_open(struct inode *i, struct file *f) {
 	printk(KERN_DEBUG "35c3: open()\n");
